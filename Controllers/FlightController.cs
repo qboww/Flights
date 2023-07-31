@@ -8,19 +8,12 @@ namespace Flights.Controllers
     [Route("[controller]")]
     public class FlightController : ControllerBase
     {
+        static Random random = new Random();
+
         private readonly ILogger<FlightController> _logger;
 
-        public FlightController(ILogger<FlightController> logger)
+        static private FlightRm[] flights = new FlightRm[]
         {
-            _logger = logger;
-        }
-
-        Random random = new Random();
-
-        [HttpGet]
-        public IEnumerable<FlightRm> Search()
-           => new FlightRm[]
-           {
                 new (   Guid.NewGuid(),
                         "American Airlines",
                         random.Next(90, 5000).ToString(),
@@ -71,5 +64,32 @@ namespace Flights.Controllers
                             random.Next(1, 853))
            };
 
+        public FlightController(ILogger<FlightController> logger)
+        {
+            _logger = logger;
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(FlightRm), 200)]
+        public IEnumerable<FlightRm> Search()
+        => flights;
+
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(FlightRm), 200)]
+        [HttpGet("{id}")]
+        public ActionResult<FlightRm> Find(Guid id)
+        {
+            var flight = flights.SingleOrDefault(f => f.Id == id);
+
+            if (flight == null)
+                return NotFound();
+
+            return Ok(flight);
+        }
+        
     }
 }
